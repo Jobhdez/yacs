@@ -1,0 +1,361 @@
+
+state 0
+	$accept: .program $end 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	program  goto 1
+	expr  goto 2
+
+state 1
+	$accept:  program.$end 
+
+	$end  accept
+	.  error
+
+
+state 2
+	program:  expr.    (1)
+
+	.  reduce 1 (src line 133)
+
+
+state 3
+	expr:  INTEGER.    (2)
+
+	.  reduce 2 (src line 139)
+
+
+state 4
+	expr:  NAME.    (3)
+
+	.  reduce 3 (src line 143)
+
+
+state 5
+	expr:  LPAREN.LET LPAREN binding RPAREN expr RPAREN 
+	expr:  LPAREN.IF expr expr expr RPAREN 
+	expr:  LPAREN.DEFINE NAME expr RPAREN 
+	expr:  LPAREN.expr expr_list RPAREN 
+	expr:  LPAREN.PLUS expr expr RPAREN 
+	expr:  LPAREN.LT expr expr RPAREN 
+	expr:  LPAREN.GT expr expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	PLUS  shift 10
+	LT  shift 11
+	GT  shift 12
+	LET  shift 6
+	IF  shift 7
+	DEFINE  shift 8
+	.  error
+
+	expr  goto 9
+
+state 6
+	expr:  LPAREN LET.LPAREN binding RPAREN expr RPAREN 
+
+	LPAREN  shift 13
+	.  error
+
+
+state 7
+	expr:  LPAREN IF.expr expr expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 14
+
+state 8
+	expr:  LPAREN DEFINE.NAME expr RPAREN 
+
+	NAME  shift 15
+	.  error
+
+
+state 9
+	expr:  LPAREN expr.expr_list RPAREN 
+	expr_list: .    (12)
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  reduce 12 (src line 173)
+
+	expr  goto 17
+	expr_list  goto 16
+
+state 10
+	expr:  LPAREN PLUS.expr expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 18
+
+state 11
+	expr:  LPAREN LT.expr expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 19
+
+state 12
+	expr:  LPAREN GT.expr expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 20
+
+state 13
+	expr:  LPAREN LET LPAREN.binding RPAREN expr RPAREN 
+
+	LPAREN  shift 22
+	.  error
+
+	binding  goto 21
+
+state 14
+	expr:  LPAREN IF expr.expr expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 23
+
+state 15
+	expr:  LPAREN DEFINE NAME.expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 24
+
+state 16
+	expr:  LPAREN expr expr_list.RPAREN 
+
+	RPAREN  shift 25
+	.  error
+
+
+state 17
+	expr_list:  expr.expr_list 
+	expr_list: .    (12)
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  reduce 12 (src line 173)
+
+	expr  goto 17
+	expr_list  goto 26
+
+state 18
+	expr:  LPAREN PLUS expr.expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 27
+
+state 19
+	expr:  LPAREN LT expr.expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 28
+
+state 20
+	expr:  LPAREN GT expr.expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 29
+
+state 21
+	expr:  LPAREN LET LPAREN binding.RPAREN expr RPAREN 
+
+	RPAREN  shift 30
+	.  error
+
+
+state 22
+	binding:  LPAREN.NAME expr RPAREN 
+
+	NAME  shift 31
+	.  error
+
+
+state 23
+	expr:  LPAREN IF expr expr.expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 32
+
+state 24
+	expr:  LPAREN DEFINE NAME expr.RPAREN 
+
+	RPAREN  shift 33
+	.  error
+
+
+state 25
+	expr:  LPAREN expr expr_list RPAREN.    (7)
+
+	.  reduce 7 (src line 155)
+
+
+state 26
+	expr_list:  expr expr_list.    (13)
+
+	.  reduce 13 (src line 177)
+
+
+state 27
+	expr:  LPAREN PLUS expr expr.RPAREN 
+
+	RPAREN  shift 34
+	.  error
+
+
+state 28
+	expr:  LPAREN LT expr expr.RPAREN 
+
+	RPAREN  shift 35
+	.  error
+
+
+state 29
+	expr:  LPAREN GT expr expr.RPAREN 
+
+	RPAREN  shift 36
+	.  error
+
+
+state 30
+	expr:  LPAREN LET LPAREN binding RPAREN.expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 37
+
+state 31
+	binding:  LPAREN NAME.expr RPAREN 
+
+	NAME  shift 4
+	INTEGER  shift 3
+	LPAREN  shift 5
+	.  error
+
+	expr  goto 38
+
+state 32
+	expr:  LPAREN IF expr expr expr.RPAREN 
+
+	RPAREN  shift 39
+	.  error
+
+
+state 33
+	expr:  LPAREN DEFINE NAME expr RPAREN.    (6)
+
+	.  reduce 6 (src line 152)
+
+
+state 34
+	expr:  LPAREN PLUS expr expr RPAREN.    (8)
+
+	.  reduce 8 (src line 158)
+
+
+state 35
+	expr:  LPAREN LT expr expr RPAREN.    (9)
+
+	.  reduce 9 (src line 161)
+
+
+state 36
+	expr:  LPAREN GT expr expr RPAREN.    (10)
+
+	.  reduce 10 (src line 164)
+
+
+state 37
+	expr:  LPAREN LET LPAREN binding RPAREN expr.RPAREN 
+
+	RPAREN  shift 40
+	.  error
+
+
+state 38
+	binding:  LPAREN NAME expr.RPAREN 
+
+	RPAREN  shift 41
+	.  error
+
+
+state 39
+	expr:  LPAREN IF expr expr expr RPAREN.    (5)
+
+	.  reduce 5 (src line 149)
+
+
+state 40
+	expr:  LPAREN LET LPAREN binding RPAREN expr RPAREN.    (4)
+
+	.  reduce 4 (src line 146)
+
+
+state 41
+	binding:  LPAREN NAME expr RPAREN.    (11)
+
+	.  reduce 11 (src line 168)
+
+
+15 terminals, 5 nonterminals
+14 grammar rules, 42/16000 states
+0 shift/reduce, 0 reduce/reduce conflicts reported
+54 working sets used
+memory: parser 19/240000
+33 extra closures
+67 shift entries, 1 exceptions
+19 goto entries
+1 entries saved by goto default
+Optimizer space used: output 44/240000
+44 table entries, 0 zero
+maximum spread: 13, maximum offset: 31
