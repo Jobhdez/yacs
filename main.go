@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
+
+// Mon Intermediate
 
 type MonExpression interface{}
 
@@ -32,14 +35,19 @@ type MonIf struct {
 }
 
 type MonBinary struct {
-	Op string
-	Left MonExpression
+	Op    string
+	Left  MonExpression
 	Right MonExpression
 }
 
 type MonWhile struct {
-	Cnd MonExpression
+	Cnd  MonExpression
 	Body MonExpression
+}
+
+// Select Instructor
+type Instructions struct {
+	Instructs [][]string
 }
 
 func PrintLetExpr(letExpr LetExpr) {
@@ -125,9 +133,90 @@ func ToAnf(expr Expression) MonExpression {
 		body := ToAnf(e.Body)
 		return MonWhile{Cnd: cnd, Body: body}
 	default:
-
 		return nil
 	}
+}
+
+func SelectInstructions(expr MonExpression) Instructions {
+    switch e := expr.(type) {
+    case MonInt:
+        instructions := make([][]string, 0)
+        strnum := strconv.Itoa(e.Value)
+        movinstruction := []string{"movq", strnum, "%rdi"}
+        callinstruction := []string{"callq", "print_int"}
+
+        instructions = append(instructions, movinstruction, callinstruction)
+        return Instructions{Instructs: instructions}
+
+    case MonVar:
+        instructions := make([][]string, 0)
+        movinstruction := []string{"movq", e.Name, "%rdi"}
+        callinstruction := []string{"callq", "print_int"}
+
+        instructions = append(instructions, movinstruction, callinstruction)
+        return Instructions{Instructs: instructions}
+
+    case MonLet:
+        instructions := make([][]string, 0)
+        binding := e.MonBindings[0]
+
+        switch val := binding.Value.(type) {
+        case MonInt:
+            strnum := strconv.Itoa(val.Value)
+            movinstruction := []string{"movq", strnum, binding.Name}
+            instructions = append(instructions, movinstruction)
+            bodyinstructions := SelectInstructions(e.Body)
+            instructions = append(instructions, bodyinstructions.Instructs...)
+            return Instructions{Instructs: instructions}
+        default:
+            fmt.Println("Unsupported MonExpression in Let")
+            return Instructions{Instructs: [][]string{}}
+        }
+
+    case MonIf:
+        condInstructions := SelectInstructions(e.Cond)
+        thenInstructions := SelectInstructions(e.Then)
+        elseInstructions := SelectInstructions(e.Else)
+        instructions := append(condInstructions.Instructs, thenInstructions.Instructs...)
+        instructions = append(instructions, elseInstructions.Instructs...)
+        return Instructions{Instructs: instructions}
+
+    case MonBinary:
+        op := e.Op
+        switch op {
+        case "<":
+            instructions := make([][]string, 0)
+
+            rightExpr, ok := e.Right.(MonInt)
+            if !ok {
+                fmt.Println("Expected MonInt for the right side of binary operation")
+                return Instructions{Instructs: [][]string{}}
+            }
+            leftExpr, ok := e.Left.(MonVar)
+            if !ok {
+                fmt.Println("Expected MonVar for the left side of binary operation")
+                return Instructions{Instructs: [][]string{}}
+            }
+
+            strnum := strconv.Itoa(rightExpr.Value)
+            cmpin := []string{"cmpq", strnum, leftExpr.Name}
+            instructions = append(instructions, cmpin)
+
+            return Instructions{Instructs: instructions}
+
+        default:
+            fmt.Println("Unsupported binary operator")
+            return Instructions{Instructs: [][]string{}}
+        }
+
+    default:
+        return Instructions{Instructs: [][]string{}}
+    }
+}
+
+
+func PrintSelect(ins Instructions) {
+	fmt.Println(ins.Instructs)
 }
 
 func PrintMonLet(letExpr MonLet) {
@@ -172,7 +261,6 @@ func PrintMon(mon MonExpression) {
 	}
 }
 
-
 func Parse(input string) (Expression, error) {
 	lexer := &Lexer{}
 	lexer.Init(strings.NewReader(input))
@@ -185,11 +273,7 @@ func Parse(input string) (Expression, error) {
 }
 
 func main() {
-	// Example input: (let ((x 3)) 4)
-	//input := "(let ((x 3)) 4)"
-	//input := "(< 2 3)"
-	//input := "(let ((x 3)) (if (< x 3) 2 4))"
-	input := "(let ((i 0)) (while (< i 5) i))"
+	input := "(let ((i 0)) (if (< i 3) 3 5))"
 	ast, err := Parse(input)
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -199,4 +283,6 @@ func main() {
 	PrintExpr(ast)
 	monAst := ToAnf(ast)
 	PrintMon(monAst)
+	ss := SelectInstructions(monAst)
+	PrintSelect(ss)
 }
