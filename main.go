@@ -72,7 +72,8 @@ func ToAnf(expr Expression) MonExpression {
 		body := ToAnf(e.Body)
 		return MonWhile{Cnd: cnd, Body: body}
 	default:
-		return nil 
+
+		return nil
 	}
 }
 
