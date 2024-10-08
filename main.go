@@ -42,7 +42,7 @@ func ToAnf(expr Expression) MonExpression {
 	case Var:
 		return MonVar{Name: e.Name}
 	default:
-		return nil // Handle error or unsupported cases
+		return nil
 	}
 }
 
@@ -70,7 +70,6 @@ func PrintMon(mon MonExpression) {
 	}
 }
 
-// Parse function (Assume lexer and parser setup)
 func Parse(input string) (Expression, error) {
 	lexer := &Lexer{}
 	lexer.Init(strings.NewReader(input))
@@ -83,7 +82,6 @@ func Parse(input string) (Expression, error) {
 }
 
 func main() {
-	// Example input: (let ((x 3)) 4)
 	input := "(let ((x 3)) 4)"
 	ast, err := Parse(input)
 	if err != nil {
