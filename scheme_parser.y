@@ -53,6 +53,11 @@ type BinaryOp struct {
 	Right    Expression
 }
 
+  type WhileExpr struct {
+    Cnd Expression
+    Body Expression
+  }
+
 func PrintLetExpr(letExpr LetExpr) {
 	fmt.Println("Let Expression:")
 	for _, binding := range letExpr.Bindings {
@@ -98,6 +103,9 @@ func PrintExpr(expr Expression) {
 		fmt.Printf(", Right: ")
 		PrintExpr(e.Right)
 		fmt.Println(")")
+	case WhileExpr:
+		PrintExpr(e.Cnd)
+		PrintExpr(e.Body)
 	default:
 		fmt.Println("Unknown expression")
 	}
@@ -121,7 +129,7 @@ func PrintExpr(expr Expression) {
 %token LPAREN RPAREN PLUS LT GT
 
 %token<str> LET
-%token IF DEFINE LAMBDA EQ
+%token IF DEFINE LAMBDA EQ WHILE
 
 %start program
 
@@ -160,6 +168,9 @@ expr:
 	}
 	| LPAREN GT expr expr RPAREN {
 		$$ = BinaryOp{Operator: ">", Left: $3, Right: $4}
+	}
+        | LPAREN WHILE expr expr RPAREN {
+		  $$ = WhileExpr{Cnd: $3, Body: $4}
 	}
 
 binding:
@@ -203,6 +214,8 @@ func (l *Lexer) Lex(lval *yySymType) int {
 			return LET
 		case "define":
 			return DEFINE
+	       	case "while":
+			return WHILE
 		default:
 			lval.str = lit
 			return NAME
