@@ -25,6 +25,23 @@ type MonInt struct {
 	Value int
 }
 
+type MonIf struct {
+	Cond MonExpression
+	Then MonExpression
+	Else MonExpression
+}
+
+type MonBinary struct {
+	Op string
+	Left MonExpression
+	Right MonExpression
+}
+
+type MonWhile struct {
+	Cnd MonExpression
+	Body MonExpression
+}
+
 func ToAnf(expr Expression) MonExpression {
 	switch e := expr.(type) {
 	case IntLiteral:
@@ -41,8 +58,21 @@ func ToAnf(expr Expression) MonExpression {
 		return MonLet{MonBindings: monBindings, Body: monBody}
 	case Var:
 		return MonVar{Name: e.Name}
+	case IfExpr:
+		cnd := ToAnf(e.Cond)
+		thn := ToAnf(e.Then)
+		els := ToAnf(e.Else)
+		return MonIf{Cond: cnd, Then: thn, Else: els}
+	case BinaryOp:
+		left := ToAnf(e.Left)
+		right := ToAnf(e.Right)
+		return MonBinary{Op: e.Operator, Left: left, Right: right}
+	case WhileExpr:
+		cnd := ToAnf(e.Cnd)
+		body := ToAnf(e.Body)
+		return MonWhile{Cnd: cnd, Body: body}
 	default:
-		return nil // Handle error or unsupported cases
+		return nil 
 	}
 }
 
@@ -65,12 +95,30 @@ func PrintMon(mon MonExpression) {
 		fmt.Printf("MonVar(%s)\n", e.Name)
 	case MonLet:
 		PrintMonLet(e)
+	case MonIf:
+		fmt.Printf("MonIfExpr(Cond: ")
+		PrintMon(e.Cond)
+		fmt.Printf(" Then: ")
+		PrintMon(e.Then)
+		fmt.Printf(" Else: ")
+		PrintMon(e.Else)
+		fmt.Println(")")
+	case MonBinary:
+		fmt.Printf("MonBinaryOp(Operator: %s, Left: ", e.Op)
+		PrintMon(e.Left)
+		fmt.Printf(", Right: ")
+		PrintMon(e.Right)
+		fmt.Println(")")
+	case MonWhile:
+		fmt.Printf("MonWhile:")
+		PrintMon(e.Cnd)
+		PrintMon(e.Body)
 	default:
 		fmt.Println("Unknown MonExpression")
 	}
 }
 
-// Parse function (Assume lexer and parser setup)
+
 func Parse(input string) (Expression, error) {
 	lexer := &Lexer{}
 	lexer.Init(strings.NewReader(input))
@@ -84,13 +132,17 @@ func Parse(input string) (Expression, error) {
 
 func main() {
 	// Example input: (let ((x 3)) 4)
-	input := "(let ((x 3)) 4)"
+	//input := "(let ((x 3)) 4)"
+	//input := "(< 2 3)"
+	//input := "(let ((x 3)) (if (< x 3) 2 4))"
+	input := "(let ((i 0)) (while (< i 5) i))"
 	ast, err := Parse(input)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
+	PrintExpr(ast)
 	monAst := ToAnf(ast)
 	PrintMon(monAst)
 }
