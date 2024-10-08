@@ -42,6 +42,59 @@ type MonWhile struct {
 	Body MonExpression
 }
 
+func PrintLetExpr(letExpr LetExpr) {
+	fmt.Println("Let Expression:")
+	for _, binding := range letExpr.Bindings {
+		fmt.Printf("Binding: %s = ", binding.Name)
+		PrintExpr(binding.Value)
+	}
+	fmt.Printf("Body: ")
+	PrintExpr(letExpr.Body)
+	fmt.Println()
+}
+
+func PrintExpr(expr Expression) {
+	switch e := expr.(type) {
+	case IntLiteral:
+		fmt.Printf("IntLiteral(%d)\n", e.Value)
+	case Var:
+		fmt.Printf("Var(%s)\n", e.Name)
+	case IfExpr:
+		fmt.Printf("IfExpr(Cond: ")
+		PrintExpr(e.Cond)
+		fmt.Printf(" Then: ")
+		PrintExpr(e.Then)
+		fmt.Printf(" Else: ")
+		PrintExpr(e.Else)
+		fmt.Println(")")
+	case LetExpr:
+		PrintLetExpr(e)
+	case Application:
+		fmt.Printf("Application(Func: ")
+		PrintExpr(e.Func)
+		fmt.Printf(" Args: ")
+		for _, arg := range e.Args {
+			PrintExpr(arg)
+		}
+		fmt.Println(")")
+	case DefineExpr:
+		fmt.Printf("DefineExpr(Name: %s, Value: ", e.Name)
+		PrintExpr(e.Value)
+		fmt.Println(")")
+	case BinaryOp:
+		fmt.Printf("BinaryOp(Operator: %s, Left: ", e.Operator)
+		PrintExpr(e.Left)
+		fmt.Printf(", Right: ")
+		PrintExpr(e.Right)
+		fmt.Println(")")
+	case WhileExpr:
+		PrintExpr(e.Cnd)
+		PrintExpr(e.Body)
+	default:
+		fmt.Println("Unknown expression")
+	}
+}
+
 func ToAnf(expr Expression) MonExpression {
 	switch e := expr.(type) {
 	case IntLiteral:
