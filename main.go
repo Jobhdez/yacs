@@ -45,61 +45,58 @@ type MonWhile struct {
 	Body MonExpression
 }
 
+type MonSet struct {
+	Var string
+	Exp MonExpression
+}
+
 // Select Instructor
 type Instructions struct {
 	Instructs [][]string
 }
 
-func PrintLetExpr(letExpr LetExpr) {
+func PrintLetExpr(letExpr MonLet) {
 	fmt.Println("Let Expression:")
-	for _, binding := range letExpr.Bindings {
+	for _, binding := range letExpr.MonBindings {
 		fmt.Printf("Binding: %s = ", binding.Name)
-		PrintExpr(binding.Value)
+		PrintMon(binding.Value)
 	}
 	fmt.Printf("Body: ")
-	PrintExpr(letExpr.Body)
+	PrintMon(letExpr.Body)
 	fmt.Println()
 }
 
-func PrintExpr(expr Expression) {
-	switch e := expr.(type) {
-	case IntLiteral:
-		fmt.Printf("IntLiteral(%d)\n", e.Value)
-	case Var:
-		fmt.Printf("Var(%s)\n", e.Name)
-	case IfExpr:
-		fmt.Printf("IfExpr(Cond: ")
-		PrintExpr(e.Cond)
-		fmt.Printf(" Then: ")
-		PrintExpr(e.Then)
-		fmt.Printf(" Else: ")
-		PrintExpr(e.Else)
-		fmt.Println(")")
-	case LetExpr:
+func PrintMon(mon MonExpression) {
+	switch e := mon.(type) {
+	case MonInt:
+		fmt.Printf("MonInt(%d)\n", e.Value)
+	case MonVar:
+		fmt.Printf("MonVar(%s)\n", e.Name)
+	case MonLet:
 		PrintLetExpr(e)
-	case Application:
-		fmt.Printf("Application(Func: ")
-		PrintExpr(e.Func)
-		fmt.Printf(" Args: ")
-		for _, arg := range e.Args {
-			PrintExpr(arg)
-		}
+	case MonIf:
+		fmt.Printf("MonIfExpr(Cond: ")
+		PrintMon(e.Cond)
+		fmt.Printf(" Then: ")
+		PrintMon(e.Then)
+		fmt.Printf(" Else: ")
+		PrintMon(e.Else)
 		fmt.Println(")")
-	case DefineExpr:
-		fmt.Printf("DefineExpr(Name: %s, Value: ", e.Name)
-		PrintExpr(e.Value)
-		fmt.Println(")")
-	case BinaryOp:
-		fmt.Printf("BinaryOp(Operator: %s, Left: ", e.Operator)
-		PrintExpr(e.Left)
+	case MonBinary:
+		fmt.Printf("MonBinaryOp(Operator: %s, Left: ", e.Op)
+		PrintMon(e.Left)
 		fmt.Printf(", Right: ")
-		PrintExpr(e.Right)
+		PrintMon(e.Right)
 		fmt.Println(")")
-	case WhileExpr:
-		PrintExpr(e.Cnd)
-		PrintExpr(e.Body)
+	case MonWhile:
+		fmt.Printf("MonWhile:")
+		PrintMon(e.Cnd)
+		PrintMon(e.Body)
+	case MonSet:
+		PrintMon(e.Var)
+		PrintMon(e.Exp)
 	default:
-		fmt.Println("Unknown expression")
+		fmt.Println("Unknown MonExpression")
 	}
 }
 
@@ -132,148 +129,130 @@ func ToAnf(expr Expression) MonExpression {
 		cnd := ToAnf(e.Cnd)
 		body := ToAnf(e.Body)
 		return MonWhile{Cnd: cnd, Body: body}
+	case SetExpr:
+		variable := e.Name
+		exp := ToAnf(e.Value)
+		return MonSet{Var: variable, Exp: exp}
 	default:
 		return nil
 	}
 }
 
 func SelectInstructions(expr MonExpression) Instructions {
-    switch e := expr.(type) {
-    case MonInt:
-        instructions := make([][]string, 0)
-        strnum := strconv.Itoa(e.Value)
-        movinstruction := []string{"movq", strnum, "%rdi"}
-        callinstruction := []string{"callq", "print_int"}
+	switch e := expr.(type) {
+	case MonInt:
+		instructions := make([][]string, 0)
+		strnum := strconv.Itoa(e.Value)
+		movinstruction := []string{"movq", strnum, "%rdi"}
+		callinstruction := []string{"callq", "print_int"}
 
-        instructions = append(instructions, movinstruction, callinstruction)
-        return Instructions{Instructs: instructions}
+		instructions = append(instructions, movinstruction, callinstruction)
+		return Instructions{Instructs: instructions}
 
-    case MonVar:
-        instructions := make([][]string, 0)
-        movinstruction := []string{"movq", e.Name, "%rdi"}
-        callinstruction := []string{"callq", "print_int"}
+	case MonVar:
+		instructions := make([][]string, 0)
+		movinstruction := []string{"movq", e.Name, "%rdi"}
+		callinstruction := []string{"callq", "print_int"}
 
-        instructions = append(instructions, movinstruction, callinstruction)
-        return Instructions{Instructs: instructions}
+		instructions = append(instructions, movinstruction, callinstruction)
+		return Instructions{Instructs: instructions}
 
-    case MonLet:
-        instructions := make([][]string, 0)
-        binding := e.MonBindings[0]
+	case MonLet:
+		instructions := make([][]string, 0)
+		binding := e.MonBindings[0]
 
-        switch val := binding.Value.(type) {
-        case MonInt:
-            strnum := strconv.Itoa(val.Value)
-            movinstruction := []string{"movq", strnum, binding.Name}
-            instructions = append(instructions, movinstruction)
-            bodyinstructions := SelectInstructions(e.Body)
-            instructions = append(instructions, bodyinstructions.Instructs...)
-            return Instructions{Instructs: instructions}
-        default:
-            fmt.Println("Unsupported MonExpression in Let")
-            return Instructions{Instructs: [][]string{}}
-        }
+		switch val := binding.Value.(type) {
+		case MonInt:
+			strnum := strconv.Itoa(val.Value)
+			movinstruction := []string{"movq", strnum, binding.Name}
+			instructions = append(instructions, movinstruction)
+			bodyinstructions := SelectInstructions(e.Body)
+			instructions = append(instructions, bodyinstructions.Instructs...)
+			return Instructions{Instructs: instructions}
+		default:
+			fmt.Println("Unsupported MonExpression in Let")
+			return Instructions{Instructs: [][]string{}}
+		}
 
-    case MonIf:
-        condInstructions := SelectInstructions(e.Cond)
-        thenInstructions := SelectInstructions(e.Then)
-        elseInstructions := SelectInstructions(e.Else)
-        instructions := append(condInstructions.Instructs, thenInstructions.Instructs...)
-        instructions = append(instructions, elseInstructions.Instructs...)
-        return Instructions{Instructs: instructions}
+	case MonIf:
+		condInstructions := SelectInstructions(e.Cond)
+		thenInstructions := SelectInstructions(e.Then)
+		elseInstructions := SelectInstructions(e.Else)
+		instructions := append(condInstructions.Instructs, thenInstructions.Instructs...)
+		instructions = append(instructions, elseInstructions.Instructs...)
+		return Instructions{Instructs: instructions}
 
-    case MonBinary:
-        op := e.Op
-        switch op {
-        case "<":
-            instructions := make([][]string, 0)
+	case MonBinary:
+		op := e.Op
+		switch op {
+		case "<":
+			instructions := make([][]string, 0)
 
-            rightExpr, ok := e.Right.(MonInt)
-            if !ok {
-                fmt.Println("Expected MonInt for the right side of binary operation")
-                return Instructions{Instructs: [][]string{}}
-            }
-            leftExpr, ok := e.Left.(MonVar)
-            if !ok {
-                fmt.Println("Expected MonVar for the left side of binary operation")
-                return Instructions{Instructs: [][]string{}}
-            }
+			rightExpr, ok := e.Right.(MonInt)
+			if !ok {
+				fmt.Println("Expected MonInt for the right side of binary operation")
+				return Instructions{Instructs: [][]string{}}
+			}
+			leftExpr, ok := e.Left.(MonVar)
+			if !ok {
+				fmt.Println("Expected MonVar for the left side of binary operation")
+				return Instructions{Instructs: [][]string{}}
+			}
 
-            strnum := strconv.Itoa(rightExpr.Value)
-            cmpin := []string{"cmpq", strnum, leftExpr.Name}
-            instructions = append(instructions, cmpin)
+			strnum := strconv.Itoa(rightExpr.Value)
+			cmpin := []string{"cmpq", strnum, leftExpr.Name}
+			instructions = append(instructions, cmpin)
 
-            return Instructions{Instructs: instructions}
+			return Instructions{Instructs: instructions}
 
-        default:
-            fmt.Println("Unsupported binary operator")
-            return Instructions{Instructs: [][]string{}}
-        }
-    case MonWhile:
-	    cnd := SelectInstructions(e.Cnd)
-	    cndins := cnd.Instructs
-	    body := SelectInstructions(e.Body)
-	    bodyins := body.Instructs
+		default:
+			fmt.Println("Unsupported binary operator")
+			return Instructions{Instructs: [][]string{}}
+		}
+	case MonWhile:
+		cnd := SelectInstructions(e.Cnd)
+		cndins := cnd.Instructs
+		body := SelectInstructions(e.Body)
+		bodyins := body.Instructs
 
-	    instructions := make([][]string, 0)
-	    jllabel := [][]string{{"label", "loop"}}
-	    jlbody := append(jllabel, bodyins...)
-	    ins := append(instructions, jlbody...)
-	    jlin := [][]string{{"jl", "loop"}}
-	    inscmp := append(ins, cndins...)
-	    cmpjl := append(inscmp, jlin...)
+		instructions := make([][]string, 0)
+		jllabel := [][]string{{"label", "loop"}}
+		jlbody := append(jllabel, bodyins...)
+		ins := append(instructions, jlbody...)
+		jlin := [][]string{{"jl", "loop"}}
+		inscmp := append(ins, cndins...)
+		cmpjl := append(inscmp, jlin...)
 
-	    return Instructions{Instructs: cmpjl}
+		return Instructions{Instructs: cmpjl}
+	case MonSet:
+		switch exp := e.Exp.(type) {
+		case MonInt:
+			strnum := strconv.Itoa(exp.Value)
+			ins := [][]string{{"movq", strnum, e.Var}}
+			return Instructions{Instructs: ins}
+		case MonBinary:
+			er := exp.Right
+			var strnum string
+			switch exp2 := er.(type) {
+			case MonInt:
+				strnum = strconv.Itoa(exp2.Value)
+				ins := [][]string{{"movq", strnum, "%rax"}, {"addq", "%rax", e.Var}}
+				return Instructions{Instructs: ins}
+			default:
+				fmt.Println("Unsupported right-hand expression for binary operator")
+			}
+		default:
+			fmt.Println("Unsupported expression in MonSet")
+		}
+		return Instructions{Instructs: [][]string{}}
 
-    default:
-        return Instructions{Instructs: [][]string{}}
-    }
+	default:
+		return Instructions{Instructs: [][]string{}}
+	}
 }
-
 
 func PrintSelect(ins Instructions) {
 	fmt.Println(ins.Instructs)
-}
-
-func PrintMonLet(letExpr MonLet) {
-	fmt.Println("MonLet Expression:")
-	for _, binding := range letExpr.MonBindings {
-		fmt.Printf("Binding: %s = ", binding.Name)
-		PrintMon(binding.Value)
-	}
-	fmt.Printf("Body: ")
-	PrintMon(letExpr.Body)
-	fmt.Println()
-}
-
-func PrintMon(mon MonExpression) {
-	switch e := mon.(type) {
-	case MonInt:
-		fmt.Printf("MonInt(%d)\n", e.Value)
-	case MonVar:
-		fmt.Printf("MonVar(%s)\n", e.Name)
-	case MonLet:
-		PrintMonLet(e)
-	case MonIf:
-		fmt.Printf("MonIfExpr(Cond: ")
-		PrintMon(e.Cond)
-		fmt.Printf(" Then: ")
-		PrintMon(e.Then)
-		fmt.Printf(" Else: ")
-		PrintMon(e.Else)
-		fmt.Println(")")
-	case MonBinary:
-		fmt.Printf("MonBinaryOp(Operator: %s, Left: ", e.Op)
-		PrintMon(e.Left)
-		fmt.Printf(", Right: ")
-		PrintMon(e.Right)
-		fmt.Println(")")
-	case MonWhile:
-		fmt.Printf("MonWhile:")
-		PrintMon(e.Cnd)
-		PrintMon(e.Body)
-	default:
-		fmt.Println("Unknown MonExpression")
-	}
 }
 
 func Parse(input string) (Expression, error) {
@@ -289,14 +268,16 @@ func Parse(input string) (Expression, error) {
 
 func main() {
 	//input := "(let ((i 0)) (if (< i 3) 3 5))"
-	input := "(let ((i 0)) (while (< i 5) i))"
+	//input := "(let ((i 0)) (while (< i 5) i))"
+	input := "(set i (+ i 1))"
+	
 	ast, err := Parse(input)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
-	PrintExpr(ast)
+	PrintMon(ast)
 	monAst := ToAnf(ast)
 	PrintMon(monAst)
 	ss := SelectInstructions(monAst)
