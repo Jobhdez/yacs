@@ -53,10 +53,18 @@ type BinaryOp struct {
 	Right    Expression
 }
 
-  type WhileExpr struct {
+type WhileExpr struct {
     Cnd Expression
     Body Expression
   }
+type SetExpr struct {
+	Name  string
+	Value Expression
+}
+
+type BeginExpr struct {
+	Exprs []Expression
+}
 
 %}
 
@@ -77,7 +85,7 @@ type BinaryOp struct {
 %token LPAREN RPAREN PLUS LT GT
 
 %token<str> LET
-%token IF DEFINE LAMBDA EQ WHILE
+%token IF DEFINE LAMBDA EQ WHILE SET BEGIN
 
 %start program
 
@@ -118,8 +126,15 @@ expr:
 		$$ = BinaryOp{Operator: ">", Left: $3, Right: $4}
 	}
         | LPAREN WHILE expr expr RPAREN {
-		  $$ = WhileExpr{Cnd: $3, Body: $4}
+		$$ = WhileExpr{Cnd: $3, Body: $4}
 	}
+        | LPAREN SET NAME expr RPAREN {
+	       $$ = SetExpr{Name: $3, Value: $4}
+	}
+        | LPAREN BEGIN expr_list RPAREN {
+               $$ = BeginExpr{Exprs: $3.([]Expression)}
+        }
+
 
 binding:
 	LPAREN NAME expr RPAREN {
@@ -164,6 +179,10 @@ func (l *Lexer) Lex(lval *yySymType) int {
 			return DEFINE
 	       	case "while":
 			return WHILE
+		case "set":
+			return SET
+		case "begin":
+			return BEGIN
 		default:
 			lval.str = lit
 			return NAME
