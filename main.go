@@ -208,6 +208,21 @@ func SelectInstructions(expr MonExpression) Instructions {
             fmt.Println("Unsupported binary operator")
             return Instructions{Instructs: [][]string{}}
         }
+    case MonWhile:
+	    cnd := SelectInstructions(e.Cnd)
+	    cndins := cnd.Instructs
+	    body := SelectInstructions(e.Body)
+	    bodyins := body.Instructs
+
+	    instructions := make([][]string, 0)
+	    jllabel := [][]string{{"label", "loop"}}
+	    jlbody := append(jllabel, bodyins...)
+	    ins := append(instructions, jlbody...)
+	    jlin := [][]string{{"jl", "loop"}}
+	    inscmp := append(ins, cndins...)
+	    cmpjl := append(inscmp, jlin...)
+
+	    return Instructions{Instructs: cmpjl}
 
     default:
         return Instructions{Instructs: [][]string{}}
@@ -273,7 +288,8 @@ func Parse(input string) (Expression, error) {
 }
 
 func main() {
-	input := "(let ((i 0)) (if (< i 3) 3 5))"
+	//input := "(let ((i 0)) (if (< i 3) 3 5))"
+	input := "(let ((i 0)) (while (< i 5) i))"
 	ast, err := Parse(input)
 	if err != nil {
 		fmt.Println("Error:", err)
