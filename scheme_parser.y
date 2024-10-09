@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"text/scanner"
 	"strconv"
+	"strings"
 )
 
 type Expression interface{}
@@ -202,4 +203,15 @@ func (l *Lexer) Lex(lval *yySymType) int {
 
 func (l *Lexer) Error(e string) {
 	fmt.Printf("Lex error: %s\n", e)
+}
+
+func Parse(input string) (Expression, error) {
+	lexer := &Lexer{}
+	lexer.Init(strings.NewReader(input))
+
+	if yyParse(lexer) == 0 {
+		return lexer.result, nil
+	} else {
+		return nil, fmt.Errorf("Parsing error")
+	}
 }

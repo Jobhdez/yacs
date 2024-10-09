@@ -9,6 +9,7 @@ import __yyfmt__ "fmt"
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"text/scanner"
 )
 
@@ -72,7 +73,7 @@ type BeginExpr struct {
 	Exprs []Expression
 }
 
-//line scheme_parser.y:71
+//line scheme_parser.y:72
 type yySymType struct {
 	yys    int
 	token  Token
@@ -124,7 +125,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line scheme_parser.y:152
+//line scheme_parser.y:153
 
 type Lexer struct {
 	scanner.Scanner
@@ -177,6 +178,17 @@ func (l *Lexer) Lex(lval *yySymType) int {
 
 func (l *Lexer) Error(e string) {
 	fmt.Printf("Lex error: %s\n", e)
+}
+
+func Parse(input string) (Expression, error) {
+	lexer := &Lexer{}
+	lexer.Init(strings.NewReader(input))
+
+	if yyParse(lexer) == 0 {
+		return lexer.result, nil
+	} else {
+		return nil, fmt.Errorf("Parsing error")
+	}
 }
 
 //line yacctab:1
@@ -592,98 +604,98 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line scheme_parser.y:95
+//line scheme_parser.y:96
 		{
 			yyVAL.expr = yyDollar[1].expr
 			yylex.(*Lexer).result = yyVAL.expr
 		}
 	case 2:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line scheme_parser.y:101
+//line scheme_parser.y:102
 		{
 			yyVAL.expr = IntLiteral{Value: yyDollar[1].intval}
 		}
 	case 3:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line scheme_parser.y:104
+//line scheme_parser.y:105
 		{
 			yyVAL.expr = Var{Name: yyDollar[1].str}
 		}
 	case 4:
 		yyDollar = yyS[yypt-7 : yypt+1]
-//line scheme_parser.y:107
+//line scheme_parser.y:108
 		{
 			yyVAL.expr = LetExpr{Bindings: []Binding{yyDollar[4].expr.(Binding)}, Body: yyDollar[6].expr}
 		}
 	case 5:
 		yyDollar = yyS[yypt-6 : yypt+1]
-//line scheme_parser.y:110
+//line scheme_parser.y:111
 		{
 			yyVAL.expr = IfExpr{Cond: yyDollar[3].expr, Then: yyDollar[4].expr, Else: yyDollar[5].expr}
 		}
 	case 6:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line scheme_parser.y:113
+//line scheme_parser.y:114
 		{
 			yyVAL.expr = DefineExpr{Name: yyDollar[3].str, Value: yyDollar[4].expr}
 		}
 	case 7:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line scheme_parser.y:116
+//line scheme_parser.y:117
 		{
 			yyVAL.expr = Application{Func: yyDollar[2].expr, Args: yyDollar[3].expr.([]Expression)}
 		}
 	case 8:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line scheme_parser.y:119
+//line scheme_parser.y:120
 		{
 			yyVAL.expr = BinaryOp{Operator: "+", Left: yyDollar[3].expr, Right: yyDollar[4].expr}
 		}
 	case 9:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line scheme_parser.y:122
+//line scheme_parser.y:123
 		{
 			yyVAL.expr = BinaryOp{Operator: "<", Left: yyDollar[3].expr, Right: yyDollar[4].expr}
 		}
 	case 10:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line scheme_parser.y:125
+//line scheme_parser.y:126
 		{
 			yyVAL.expr = BinaryOp{Operator: ">", Left: yyDollar[3].expr, Right: yyDollar[4].expr}
 		}
 	case 11:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line scheme_parser.y:128
+//line scheme_parser.y:129
 		{
 			yyVAL.expr = WhileExpr{Cnd: yyDollar[3].expr, Body: yyDollar[4].expr}
 		}
 	case 12:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line scheme_parser.y:131
+//line scheme_parser.y:132
 		{
 			yyVAL.expr = SetExpr{Name: yyDollar[3].str, Value: yyDollar[4].expr}
 		}
 	case 13:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line scheme_parser.y:134
+//line scheme_parser.y:135
 		{
 			yyVAL.expr = BeginExpr{Exprs: yyDollar[3].expr.([]Expression)}
 		}
 	case 14:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line scheme_parser.y:140
+//line scheme_parser.y:141
 		{
 			yyVAL.expr = Binding{Name: yyDollar[2].str, Value: yyDollar[3].expr}
 		}
 	case 15:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line scheme_parser.y:145
+//line scheme_parser.y:146
 		{
 			yyVAL.expr = []Expression{}
 		}
 	case 16:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line scheme_parser.y:148
+//line scheme_parser.y:149
 		{
 			yyVAL.expr = append([]Expression{yyDollar[1].expr}, yyDollar[2].expr.([]Expression)...)
 		}
