@@ -1,4 +1,4 @@
-A social media site for Schemers
+A social media site for compiler enthusiasts
 
 ### How to run it
 ```
