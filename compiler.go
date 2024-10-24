@@ -1,4 +1,5 @@
 package main
+
 import (
 	"fmt"
 	"strconv"
@@ -187,7 +188,11 @@ func SelectInstructions(expr MonExpression) Instructions {
 		condInstructions := SelectInstructions(e.Cond)
 		thenInstructions := SelectInstructions(e.Then)
 		elseInstructions := SelectInstructions(e.Else)
-		instructions := append(condInstructions.Instructs, thenInstructions.Instructs...)
+		instructions := append(condInstructions.Instructs, []string{"jl", "label1"})
+		instructions = append(instructions, []string{"jmp", "label2"})
+		instructions = append(instructions, []string{"label1"})
+		instructions = append(instructions, thenInstructions.Instructs...)
+		instructions = append(instructions, []string{"label2"})
 		instructions = append(instructions, elseInstructions.Instructs...)
 		return Instructions{Instructs: instructions}
 
@@ -195,24 +200,35 @@ func SelectInstructions(expr MonExpression) Instructions {
 		op := e.Op
 		switch op {
 		case "<":
+			
 			instructions := make([][]string, 0)
-
-			rightExpr, ok := e.Right.(MonInt)
-			if !ok {
-				fmt.Println("Expected MonInt for the right side of binary operation")
+		
+			rightExpr := e.Right
+			leftExpr := e.Left
+			switch valr := rightExpr.(type) {
+			case MonInt:
+				switch vall := leftExpr.(type) {
+				case MonInt:
+					n:= strconv.Itoa(valr.Value)
+					n2 := strconv.Itoa(vall.Value)
+					mv := []string{"movq", n, "temp_m0"}
+					cmp := []string{"cmpq", "temp_m0", n2}
+					instructions = append(instructions, mv, cmp)
+					return Instructions{Instructs: instructions}
+				case MonVar:
+					strnum := strconv.Itoa(valr.Value)
+					cmpin := []string{"cmpq", strnum, vall.Name}
+					instructions = append(instructions, cmpin)
+					return Instructions{Instructs: instructions}
+				default:
+					fmt.Println("Unsupported binary op")
+					return Instructions{Instructs: [][]string{}}
+					
+				}
+			default:
+				fmt.Println("Unsupported binary operator")
 				return Instructions{Instructs: [][]string{}}
 			}
-			leftExpr, ok := e.Left.(MonVar)
-			if !ok {
-				fmt.Println("Expected MonVar for the left side of binary operation")
-				return Instructions{Instructs: [][]string{}}
-			}
-
-			strnum := strconv.Itoa(rightExpr.Value)
-			cmpin := []string{"cmpq", strnum, leftExpr.Name}
-			instructions = append(instructions, cmpin)
-
-			return Instructions{Instructs: instructions}
 
 		default:
 			fmt.Println("Unsupported binary operator")
@@ -264,6 +280,8 @@ func SelectInstructions(expr MonExpression) Instructions {
 		return Instructions{Instructs: [][]string{}}
 
 	default:
+		// If no case matches, return empty instructions
+		fmt.Println("Unsupported expression type")
 		return Instructions{Instructs: [][]string{}}
 	}
 }
@@ -271,3 +289,4 @@ func SelectInstructions(expr MonExpression) Instructions {
 func PrintSelect(ins Instructions) {
 	fmt.Println(ins.Instructs)
 }
+
