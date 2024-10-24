@@ -1,4 +1,4 @@
-A social media site for compiler enthusiasts
+YaCS - Yet another Compiler Service :-)
 
 ### How to run it
 ```
