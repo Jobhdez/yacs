@@ -1,4 +1,6 @@
-YaCS - Yet another Compiler Service :-)
+### YaCS - Yet another Compiler Service :-)
+
+A compiler web service I quickly wrote to for fun in Go. It compiles core programming features such as `let`, `while loops` and `if` statements. Although this is an S-Expression mini language, its not Scheme.
 
 ### How to run it
 ```
@@ -6,7 +8,7 @@ $ make main
 ```
 
 #### Compiler Webservice
-The compiler web service will be core to the social media :-)
+T
 
 ```python
 >>> url = "http://localhost:1234/api/compiler"
