@@ -7,5 +7,6 @@ main:
 	go build -o scheme_parser main.go compiler.go scheme_parser.go
 
 
-
+compile:
+	go build -o compiler compiler.go scheme_parser.go
 
