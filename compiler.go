@@ -290,7 +290,7 @@ func PrintSelect(ins Instructions) {
 	fmt.Println(ins.Instructs)
 }
 
-
+/*
 func main() {
 	//input := "(if (< 2 3) 2 3)"
 	input := "(let ((sum 0)) (let ((i 0)) (if (< sum 4) i 9)))"
@@ -300,3 +300,4 @@ func main() {
 	ss := SelectInstructions(monAst)
 	PrintSelect(ss)
 }
+*/
