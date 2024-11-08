@@ -7,21 +7,19 @@ A compiler web service I quickly wrote to for fun in Go. It compiles core progra
 $ make main
 ```
 
-#### Compiler Webservice
+or with Docker:
+
+```
+$ docker build -t service .
+$ docker run -p 1234:1234 service
+```
+
+#### How to call the web service 
 
 ```python
+>>> data = "(let ((sum 0)) (let ((i 0)) (begin (while (< i 5) (begin (set sum (+ sum 3)) (set i (+ i 1)))) sum)))"
 >>> url = "http://localhost:1234/api/compiler"
->>> re = requests.post(url, json={"exp":"(let ((i 0)) (begin (while (< i 4) (set i (+ i 1))) i))"})
-
+>>> re = requests.post(url, json={"exp": data})
 >>> re.json()
-{'exp': '[[movq 0 i] [label loop] [movq 1 %rax] [addq %rax i] [cmpq 4 i] [jl loop] [movq i %rdi] [callq print_int]]'}
-
->>> re = requests.post(url, json={"exp":"(if (< 2 3) 1 2)"})
->>> re.json()
-{'exp': '[[movq 3 temp_m0] [cmpq temp_m0 2] [jl label1] [jmp label2] [label1] [movq 1 %rdi] [callq print_int] [label2] [movq 2 %rdi] [callq print_int]]'}
-
->>> re = requests.post(url, json={"exp":"(let ((i 0)) (if (< i 0) 2 3))"})
->>> re.json()
-{'exp': '[[movq 0 i] [cmpq 0 i] [jl label1] [jmp label2] [label1] [movq 2 %rdi] [callq print_int] [label2] [movq 3 %rdi] [callq print_int]]'}
-
-
+{'exp': '\t.globl  main\nmain:\n\tpushq  %rbp\n\tmovq  %rsp,  %rbp\n\tsubq  $16,  %rsp\n\tmovq  $0,  -8(%rbp)\n\tmovq  $0,  -16(%rbp)\n\nloop_99:\n\tmovq  $3,  %rax\n\taddq  %rax  -8(%rbp)\n\tmovq  $1,  %rax\n\taddq  %rax  -16(%rbp)\n\tcmpq  $5,  -16(%rbp)\n\tjl  loop_99\n\tmovq  -8(%rbp),  %rdi\n\tcallq  print_int\n\nconclusion:\n\taddq  $16,  %rsp\n\tpopq  %rbp\n\tretq'}
+```
