@@ -23,7 +23,7 @@ func Compile(exp string) string {
 
 	monAst := ToAnf(ast)
 	ss := ToSelect(monAst)
-	return InstructionsToString(ss)
+	return ToAssembly(ss)
 }
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {

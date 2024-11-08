@@ -58,52 +58,6 @@ type Instructions struct {
 	Instructs [][]string
 }
 
-func PrintLetExpr(letExpr MonLet) {
-	fmt.Println("Let Expression:")
-	for _, binding := range letExpr.MonBindings {
-		fmt.Printf("Binding: %s = ", binding.Name)
-		PrintMon(binding.Value)
-	}
-	fmt.Printf("Body: ")
-	PrintMon(letExpr.Body)
-	fmt.Println()
-}
-
-func PrintMon(mon MonExpression) {
-	switch e := mon.(type) {
-	case MonInt:
-		fmt.Printf("MonInt(%d)\n", e.Value)
-	case MonVar:
-		fmt.Printf("MonVar(%s)\n", e.Name)
-	case MonLet:
-		PrintLetExpr(e)
-	case MonIf:
-		fmt.Printf("MonIfExpr(Cond: ")
-		PrintMon(e.Cond)
-		fmt.Printf(" Then: ")
-		PrintMon(e.Then)
-		fmt.Printf(" Else: ")
-		PrintMon(e.Else)
-		fmt.Println(")")
-	case MonBinary:
-		fmt.Printf("MonBinaryOp(Operator: %s, Left: ", e.Op)
-		PrintMon(e.Left)
-		fmt.Printf(", Right: ")
-		PrintMon(e.Right)
-		fmt.Println(")")
-	case MonWhile:
-		fmt.Printf("MonWhile:")
-		PrintMon(e.Cnd)
-		PrintMon(e.Body)
-	case MonSet:
-		fmt.Printf("MonSet(Var: %s, Exp: ", e.Var)
-		PrintMon(e.Exp)
-		fmt.Println(")")
-	default:
-		fmt.Println("Unknown MonExpression")
-	}
-}
-
 func ToAnf(expr Expression) MonExpression {
 	switch e := expr.(type) {
 	case IntLiteral:
@@ -294,13 +248,7 @@ func SelectInstructions(expr MonExpression, stack map[string]string, counter int
 	}
 }
 
-func PrintSelect(ins Instructions) {
-	for _, instr := range ins.Instructs {
-		fmt.Println(instr)
-	}
-}
-
-func InstructionsToString(ins Instructions) string {
+func ToAssembly(ins Instructions) string {
 	var result string
 	for _, instr := range ins.Instructs {
 		if len(instr) == 1 {
@@ -312,6 +260,59 @@ func InstructionsToString(ins Instructions) string {
 		}
 	}
 	return result
+}
+
+// Print ASTs
+func PrintLetExpr(letExpr MonLet) {
+	fmt.Println("Let Expression:")
+	for _, binding := range letExpr.MonBindings {
+		fmt.Printf("Binding: %s = ", binding.Name)
+		PrintMon(binding.Value)
+	}
+	fmt.Printf("Body: ")
+	PrintMon(letExpr.Body)
+	fmt.Println()
+}
+
+func PrintMon(mon MonExpression) {
+	switch e := mon.(type) {
+	case MonInt:
+		fmt.Printf("MonInt(%d)\n", e.Value)
+	case MonVar:
+		fmt.Printf("MonVar(%s)\n", e.Name)
+	case MonLet:
+		PrintLetExpr(e)
+	case MonIf:
+		fmt.Printf("MonIfExpr(Cond: ")
+		PrintMon(e.Cond)
+		fmt.Printf(" Then: ")
+		PrintMon(e.Then)
+		fmt.Printf(" Else: ")
+		PrintMon(e.Else)
+		fmt.Println(")")
+	case MonBinary:
+		fmt.Printf("MonBinaryOp(Operator: %s, Left: ", e.Op)
+		PrintMon(e.Left)
+		fmt.Printf(", Right: ")
+		PrintMon(e.Right)
+		fmt.Println(")")
+	case MonWhile:
+		fmt.Printf("MonWhile:")
+		PrintMon(e.Cnd)
+		PrintMon(e.Body)
+	case MonSet:
+		fmt.Printf("MonSet(Var: %s, Exp: ", e.Var)
+		PrintMon(e.Exp)
+		fmt.Println(")")
+	default:
+		fmt.Println("Unknown MonExpression")
+	}
+}
+
+func PrintSelect(ins Instructions) {
+	for _, instr := range ins.Instructs {
+		fmt.Println(instr)
+	}
 }
 
 /*
