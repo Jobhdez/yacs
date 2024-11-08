@@ -1,12 +1,12 @@
 clean:
-	rm scheme_parser y.output compiler
+	rm service y.output compiler 
 yacc:
-	 goyacc -o scheme_parser.go scheme_parser.y
+	 goyacc -o parser.go parser.y
 
 main:
-	go build -o scheme_parser main.go compiler.go scheme_parser.go
+	go build -o service main.go compiler.go parser.go
 
 
 compile:
-	go build -o compiler compiler.go scheme_parser.go
+	go build -o compiler compiler.go parser.go
 
