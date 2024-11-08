@@ -18,13 +18,13 @@ function Compiler() {
 
   const handleChange = (event) => {
     setExample(event.target.value);
-    setExpCode(event.target.value); // Set ExpCode to update editor content
+    setExpCode(event.target.value);
   };
 
   const IfHandle = () => {
     const exampleCode = "(let ((x 3)) (if (< x 4) 3 4))";
     setExample(exampleCode);
-    setExpCode(exampleCode); // Update editor content
+    setExpCode(exampleCode);
   };
 
   const whileHandle = () => {
@@ -50,15 +50,15 @@ function Compiler() {
   const lispApi = "http://localhost:1234/api/compiler";
 
   function Compile() {
-    const data = JSON.stringify({ exp: ExpCode }); // Format data as JSON
+    const data = JSON.stringify({ exp: ExpCode });
 
     fetch(lispApi, {
       method: "POST",
       headers: {
         Accept: "application/json",
-        "Content-Type": "application/json", // Change to application/json
+        "Content-Type": "application/json",
       },
-      body: data, // Send JSON string
+      body: data,
       mode: "cors",
     })
       .then((response) => response.json())
@@ -68,9 +68,10 @@ function Compiler() {
   }
 
   return (
-    <div>
+    <Grid container spacing={2}>
       <Grid container spacing={2}>
-        <Grid item>
+        <Grid item xs={6}>
+          {" "}
           <FormControl size="small">
             <InputLabel
               sx={{
@@ -78,7 +79,7 @@ function Compiler() {
                 fontFamily: "monospace",
               }}
             >
-              Compilers
+              Programs
             </InputLabel>
             <Select
               label="Examples"
@@ -115,8 +116,8 @@ function Compiler() {
           </FormControl>
         </Grid>
       </Grid>
-      <Grid container spacing={2}>
-        <Grid item xs={9}>
+      <Grid container spacing={6}>
+        <Grid item xs={8}>
           <Box sx={{ height: "80vh" }}>
             <Editor
               theme="vs-dark"
@@ -130,17 +131,18 @@ function Compiler() {
             />
           </Box>
         </Grid>
-        <Grid item xs={3}>
+        <Grid item xs={4}>
           <Box
             sx={{
               height: "80vh",
+              width: "150%",
               overflowY: "auto",
               backgroundColor: "#f5f5f5",
               padding: "10px",
               borderRadius: "4px",
             }}
           >
-            <Typography variant="h6">Compiled Code Output:</Typography>
+            <Typography variant="h6">x86 program:</Typography>
             <pre>
               <code>{CompiledCode}</code>
             </pre>
@@ -162,7 +164,7 @@ function Compiler() {
       >
         Compile Exp
       </Button>
-    </div>
+    </Grid>
   );
 }
 
