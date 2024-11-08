@@ -319,12 +319,16 @@ func PrintSelect(ins Instructions) {
 func main() {
 	// input := "(if (< 2 3) 2 3)"
 	//input := "(let ((sum 0)) (let ((i 0)) (if (< sum 4) i 9)))"
-	input := "(let ((sum 0)) (let ((i 0)) (begin (while (< i 5) (begin (set sum (+ sum 3)) (set i (+ i 1)))) sum)))"
+	//input := "(let ((sum 0)) (let ((i 0)) (begin (while (< i 5) (begin (set sum (+ sum 3)) (set i (+ i 1)))) sum)))"
+	//input := "(let ((x 3)) (if (< x 5) 2 3))"
+	//input := "(let ((i 0)) (while (< i 5) (begin i (set i (+ i 1)))))"
+	//input := "(let ((x 2)) (+ x 3))"
+	input := "(let ((x 2)) x)"
 	ast, _ := Parse(input) // Parse function needs to be defined
 
 	monAst := ToAnf(ast)
 	PrintMon(monAst)
 	ss := ToSelect(monAst)
-	fmt.Println(InstructionsToString(ss))
+	fmt.Println(ToAssembly(ss))
 }
 */

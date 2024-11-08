@@ -13,10 +13,10 @@ RUN go mod download
 COPY . .
 
 # Build the Go application
-RUN go build -o scheme_parser main.go compiler.go scheme_parser.go
+RUN go build -o server main.go compiler.go parser.go
 
 # Expose the application port
 EXPOSE 1234
 
 # Run the application with the default port
-CMD ["./scheme_parser"]
+CMD ["./server"]

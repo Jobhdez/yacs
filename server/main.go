@@ -33,7 +33,21 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", body)
 }
 
+func enableCors(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+}
+
 func CompileHandler(w http.ResponseWriter, r *http.Request) {
+	enableCors(w)
+
+	// Handle OPTIONS method for CORS preflight request
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	log.Println("Serving:", r.URL.Path, "from", r.Host, r.Method)
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed!", http.StatusMethodNotAllowed)
