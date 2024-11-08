@@ -2,16 +2,10 @@
 
 A compiler web service I quickly wrote to for fun in Go. It compiles core programming features such as `let`, `while loops` and `if` statements. Although this is an S-Expression mini language, its not Scheme.
 
-### How to run it
-```
-$ make main
-```
-
-or with Docker:
+Run with Docker:
 
 ```
-$ docker build -t service .
-$ docker run -p 1234:1234 service
+$ docker-compose up --build
 ```
 
 #### How to call the web service 
