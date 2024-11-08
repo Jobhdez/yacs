@@ -152,7 +152,7 @@ func ToSelect(expr MonExpression) Instructions {
 	stack := make(map[string]string)
 	var counter = 0
 	instructions, stack_ := SelectInstructions(expr, stack, counter)
-	if ((stack_ % 16) == 0) {
+	if (stack_ % 16) == 0 {
 		stack_ = stack_ + 0
 	} else {
 		stack_ = stack_ + 8
@@ -165,13 +165,13 @@ func ToSelect(expr MonExpression) Instructions {
 		{"\tpushq ", "%rbp\n"},
 		{"\tmovq ", "%rsp, ", "%rbp\n"},
 		{"\tsubq ", "$" + stack_n + ", ", "%rsp\n"}}
-	
+
 	conclusion := [][]string{
 		{"\nconclusion:\n"},
-		{"\taddq ", "$"+ stack_n + ", ", "%rsp\n"},
+		{"\taddq ", "$" + stack_n + ", ", "%rsp\n"},
 		{"\tpopq ", "%rbp\n"},
 		{"\tretq"}}
-	
+
 	instructions_ := append(prelude, instructions.Instructs...)
 	instructions_ = append(instructions_, conclusion...)
 
@@ -207,7 +207,7 @@ func SelectInstructions(expr MonExpression, stack map[string]string, counter int
 				counter += 8
 				stackLocation := "-" + strconv.Itoa(counter) + "(%rbp)"
 				stack[binding.Name] = stackLocation
-				movInstruction := []string{"\tmovq ", "$" + strnum +", ", stackLocation + "\n"}
+				movInstruction := []string{"\tmovq ", "$" + strnum + ", ", stackLocation + "\n"}
 				instructions = append(instructions, movInstruction)
 			}
 			bodyInstructions, _ := SelectInstructions(e.Body, stack, counter)
@@ -255,38 +255,38 @@ func SelectInstructions(expr MonExpression, stack map[string]string, counter int
 		instructions = append(instructions, cndInstructions.Instructs...)
 		instructions = append(instructions, []string{"\tjl ", "loop_99\n"})
 		return Instructions{Instructs: instructions}, counter
-		
+
 	case MonBinary:
-	switch e.Op {
-	case "<":
-		rightVal, ok := e.Right.(MonInt)
-		leftName, leftExists := stack[e.Left.(MonVar).Name]
-		if !ok || !leftExists {
-			fmt.Println("Unsupported or missing MonExpression in Binary Op")
+		switch e.Op {
+		case "<":
+			rightVal, ok := e.Right.(MonInt)
+			leftName, leftExists := stack[e.Left.(MonVar).Name]
+			if !ok || !leftExists {
+				fmt.Println("Unsupported or missing MonExpression in Binary Op")
+				return Instructions{Instructs: [][]string{}}, counter
+			}
+			n := strconv.Itoa(rightVal.Value)
+			instructions := [][]string{
+				{"\tcmpq ", "$" + n + ", ", leftName + "\n"},
+			}
+			return Instructions{Instructs: instructions}, counter
+		case "+":
+			rightVal, ok := e.Right.(MonInt)
+			leftName, leftExists := stack[e.Left.(MonVar).Name]
+			if !ok || !leftExists {
+				fmt.Println("Unsupported or missing MonExpression in Binary Op")
+				return Instructions{Instructs: [][]string{}}, counter
+			}
+			n := strconv.Itoa(rightVal.Value)
+			instructions := [][]string{
+				{"\tmovq ", "$" + n + ", ", "%rax\n"},
+				{"\taddq ", "%rax ", leftName + "\n"},
+			}
+			return Instructions{Instructs: instructions}, counter
+		default:
+			fmt.Println("Unsupported operator in MonBinary")
 			return Instructions{Instructs: [][]string{}}, counter
 		}
-		n := strconv.Itoa(rightVal.Value)
-		instructions := [][]string{
-			{"\tcmpq ", "$" + n + ", ", leftName + "\n"},
-		}
-		return Instructions{Instructs: instructions}, counter
-	case "+":
-		rightVal, ok := e.Right.(MonInt)
-		leftName, leftExists := stack[e.Left.(MonVar).Name]
-		if !ok || !leftExists {
-			fmt.Println("Unsupported or missing MonExpression in Binary Op")
-			return Instructions{Instructs: [][]string{}}, counter
-		}
-		n := strconv.Itoa(rightVal.Value)
-		instructions := [][]string{
-			{"\tmovq ", "$" + n + ", ",  "%rax\n"},
-			{"\taddq ", "%rax ", leftName + "\n"},
-		}
-		return Instructions{Instructs: instructions}, counter
-	default:
-		fmt.Println("Unsupported operator in MonBinary")
-		return Instructions{Instructs: [][]string{}}, counter
-	}
 
 	default:
 		fmt.Println("Unsupported expression type")
@@ -303,9 +303,9 @@ func PrintSelect(ins Instructions) {
 func InstructionsToString(ins Instructions) string {
 	var result string
 	for _, instr := range ins.Instructs {
-		if (len(instr) == 1) {
+		if len(instr) == 1 {
 			result += fmt.Sprintf("%s", instr[0])
-		} else if (len(instr) == 2) {
+		} else if len(instr) == 2 {
 			result += fmt.Sprintf("%s %s", instr[0], instr[1])
 		} else {
 			result += fmt.Sprintf("%s %s %s", instr[0], instr[1], instr[2])
