@@ -150,24 +150,48 @@ func ToAnf(expr Expression) MonExpression {
 
 func ToSelect(expr MonExpression) Instructions {
 	stack := make(map[string]string)
-	counter := 0
-	return SelectInstructions(expr, stack, counter)
+	var counter = 0
+	instructions, stack_ := SelectInstructions(expr, stack, counter)
+	if ((stack_ % 16) == 0) {
+		stack_ = stack_ + 0
+	} else {
+		stack_ = stack_ + 8
+	}
+	var stack_n string
+	stack_n = strconv.Itoa(stack_)
+	prelude := [][]string{
+		{"\t.globl ", "main\n"},
+		{"main:\n"},
+		{"\tpushq ", "%rbp\n"},
+		{"\tmovq ", "%rsp, ", "%rbp\n"},
+		{"\tsubq ", "$" + stack_n + ", ", "%rsp\n"}}
+	
+	conclusion := [][]string{
+		{"\nconclusion:\n"},
+		{"\taddq ", "$"+ stack_n + ", ", "%rsp\n"},
+		{"\tpopq ", "%rbp\n"},
+		{"\tretq"}}
+	
+	instructions_ := append(prelude, instructions.Instructs...)
+	instructions_ = append(instructions_, conclusion...)
+
+	return Instructions{Instructs: instructions_}
 }
 
-func SelectInstructions(expr MonExpression, stack map[string]string, counter int) Instructions {
+func SelectInstructions(expr MonExpression, stack map[string]string, counter int) (Instructions, int) {
 	switch e := expr.(type) {
 	case MonInt:
 		instructions := [][]string{
-			{"\tmovq", "$" + strconv.Itoa(e.Value) + ",", "%rdi\n"},
-			{"\tcallq", "print_int\n"},
+			{"\tmovq ", "$" + strconv.Itoa(e.Value) + ", ", "%rdi\n"},
+			{"\tcallq ", "print_int\n"},
 		}
-		return Instructions{Instructs: instructions}
+		return Instructions{Instructs: instructions}, counter
 
 	case MonVar:
-		movInstruction := []string{"\tmovq", stack[e.Name] + ",", "%rdi\n"}
-		callInstruction := []string{"\tcallq", "print_int\n"}
+		movInstruction := []string{"\tmovq ", stack[e.Name] + ", ", "%rdi\n"}
+		callInstruction := []string{"\tcallq ", "print_int\n"}
 		instructions := [][]string{movInstruction, callInstruction}
-		return Instructions{Instructs: instructions}
+		return Instructions{Instructs: instructions}, counter
 
 	case MonLet:
 		instructions := make([][]string, 0)
@@ -177,37 +201,60 @@ func SelectInstructions(expr MonExpression, stack map[string]string, counter int
 		case MonInt:
 			strnum := strconv.Itoa(val.Value)
 			if _, ok := stack[binding.Name]; ok {
-				movInstruction := []string{"\tmovq", strnum + ",", stack[binding.Name] + "\n"}
+				movInstruction := []string{"\tmovq ", strnum + ", ", stack[binding.Name] + "\n"}
 				instructions = append(instructions, movInstruction)
 			} else {
 				counter += 8
 				stackLocation := "-" + strconv.Itoa(counter) + "(%rbp)"
 				stack[binding.Name] = stackLocation
-				movInstruction := []string{"\tmovq", "$" + strnum +",", stackLocation + "\n"}
+				movInstruction := []string{"\tmovq ", "$" + strnum +", ", stackLocation + "\n"}
 				instructions = append(instructions, movInstruction)
 			}
-			bodyInstructions := SelectInstructions(e.Body, stack, counter)
+			bodyInstructions, _ := SelectInstructions(e.Body, stack, counter)
 			instructions = append(instructions, bodyInstructions.Instructs...)
-			return Instructions{Instructs: instructions}
+			return Instructions{Instructs: instructions}, counter
 		default:
 			fmt.Println("Unsupported MonExpression in Let")
-			return Instructions{Instructs: [][]string{}}
+			return Instructions{Instructs: [][]string{}}, counter
 		}
+	case MonBegin:
+		instructions := make([][]string, 0)
+		for _, exp := range e.Exps {
+			expInstructions, _ := SelectInstructions(exp, stack, counter)
+			instructions = append(instructions, expInstructions.Instructs...)
+		}
+		return Instructions{Instructs: instructions}, counter
 
 	case MonIf:
-		condInstructions := SelectInstructions(e.Cond, stack, counter)
-		thenInstructions := SelectInstructions(e.Then, stack, counter)
-		elseInstructions := SelectInstructions(e.Else, stack, counter)
+		condInstructions, _ := SelectInstructions(e.Cond, stack, counter)
+		thenInstructions, _ := SelectInstructions(e.Then, stack, counter)
+		elseInstructions, _ := SelectInstructions(e.Else, stack, counter)
 
-		instructions := append(condInstructions.Instructs, []string{"\tjl", "label1\n"})
-		instructions = append(instructions, []string{"\tjmp", "label2\n"})
-		instructions = append(instructions, []string{"label1:\n"})
+		instructions := append(condInstructions.Instructs, []string{"\tjl ", "label1\n"})
+		instructions = append(instructions, []string{"\tjmp ", "label2\n"})
+		instructions = append(instructions, []string{"\nlabel1:\n"})
 		instructions = append(instructions, thenInstructions.Instructs...)
-		instructions = append(instructions, []string{"\tjmp", "conclusion\n"})
-		instructions = append(instructions, []string{"label2:\n"})
+		instructions = append(instructions, []string{"\tjmp ", "conclusion\n"})
+		instructions = append(instructions, []string{"\nlabel2:\n"})
 		instructions = append(instructions, elseInstructions.Instructs...)
-		instructions = append(instructions, []string{"\tjmp", "conclusion\n"})
-		return Instructions{Instructs: instructions}
+		instructions = append(instructions, []string{"\tjmp ", "conclusion\n"})
+		return Instructions{Instructs: instructions}, counter
+	case MonSet:
+		switch ins := e.Exp.(type) {
+		case MonBinary:
+			instructions, _ := SelectInstructions(ins, stack, counter)
+			return instructions, counter
+		default:
+			fmt.Println("unsupported set expr")
+			return Instructions{Instructs: [][]string{}}, counter
+		}
+	case MonWhile:
+		cndInstructions, _ := SelectInstructions(e.Cnd, stack, counter)
+		bodyInstructions, _ := SelectInstructions(e.Body, stack, counter)
+		instructions := append([][]string{{"\nloop_99:\n"}}, bodyInstructions.Instructs...)
+		instructions = append(instructions, cndInstructions.Instructs...)
+		instructions = append(instructions, []string{"\tjl ", "loop_99\n"})
+		return Instructions{Instructs: instructions}, counter
 		
 	case MonBinary:
 	switch e.Op {
@@ -216,21 +263,34 @@ func SelectInstructions(expr MonExpression, stack map[string]string, counter int
 		leftName, leftExists := stack[e.Left.(MonVar).Name]
 		if !ok || !leftExists {
 			fmt.Println("Unsupported or missing MonExpression in Binary Op")
-			return Instructions{Instructs: [][]string{}}
+			return Instructions{Instructs: [][]string{}}, counter
 		}
 		n := strconv.Itoa(rightVal.Value)
 		instructions := [][]string{
-			{"\tcmpq", "$" + n + ",", leftName + "\n"},
+			{"\tcmpq ", "$" + n + ", ", leftName + "\n"},
 		}
-		return Instructions{Instructs: instructions}
+		return Instructions{Instructs: instructions}, counter
+	case "+":
+		rightVal, ok := e.Right.(MonInt)
+		leftName, leftExists := stack[e.Left.(MonVar).Name]
+		if !ok || !leftExists {
+			fmt.Println("Unsupported or missing MonExpression in Binary Op")
+			return Instructions{Instructs: [][]string{}}, counter
+		}
+		n := strconv.Itoa(rightVal.Value)
+		instructions := [][]string{
+			{"\tmovq ", "$" + n + ", ",  "%rax\n"},
+			{"\taddq ", "%rax ", leftName + "\n"},
+		}
+		return Instructions{Instructs: instructions}, counter
 	default:
 		fmt.Println("Unsupported operator in MonBinary")
-		return Instructions{Instructs: [][]string{}}
+		return Instructions{Instructs: [][]string{}}, counter
 	}
 
 	default:
 		fmt.Println("Unsupported expression type")
-		return Instructions{Instructs: [][]string{}}
+		return Instructions{Instructs: [][]string{}}, counter
 	}
 }
 
@@ -254,14 +314,16 @@ func InstructionsToString(ins Instructions) string {
 	return result
 }
 
+/*
 func main() {
 	// input := "(if (< 2 3) 2 3)"
-	input := "(let ((sum 0)) (let ((i 0)) (if (< sum 4) i 9)))"
+	//input := "(let ((sum 0)) (let ((i 0)) (if (< sum 4) i 9)))"
+	input := "(let ((sum 0)) (let ((i 0)) (begin (while (< i 5) (begin (set sum (+ sum 3)) (set i (+ i 1)))) sum)))"
 	ast, _ := Parse(input) // Parse function needs to be defined
 
-	
 	monAst := ToAnf(ast)
 	PrintMon(monAst)
 	ss := ToSelect(monAst)
 	fmt.Println(InstructionsToString(ss))
 }
+*/

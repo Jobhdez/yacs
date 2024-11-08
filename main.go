@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -19,15 +18,12 @@ type Result struct {
 	Exp string `json:"exp"`
 }
 
-func Compile(exp string) (string, error) {
-	ast, err := Parse(exp)
-	if err != nil {
-		return "", err
-	}
+func Compile(exp string) string {
+	ast, _ := Parse(exp)
 
 	monAst := ToAnf(ast)
-	ss := SelectInstructions(monAst)
-	return SelectInsToString(ss.Instructs), nil
+	ss := ToSelect(monAst)
+	return InstructionsToString(ss)
 }
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
@@ -35,14 +31,6 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	body := "Thanks for visiting!\n"
 	fmt.Fprintf(w, "%s", body)
-}
-
-func SelectInsToString(arr [][]string) string {
-	rows := make([]string, len(arr))
-	for i, row := range arr {
-		rows[i] = "[" + strings.Join(row, " ") + "]"
-	}
-	return "[" + strings.Join(rows, " ") + "]"
 }
 
 func CompileHandler(w http.ResponseWriter, r *http.Request) {
@@ -66,11 +54,7 @@ func CompileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	selectIns, err := Compile(exp.Exp)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	selectIns := Compile(exp.Exp)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

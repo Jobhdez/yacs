@@ -1,5 +1,5 @@
 clean:
-	rm scheme_parser y.output
+	rm scheme_parser y.output compiler
 yacc:
 	 goyacc -o scheme_parser.go scheme_parser.y
 
