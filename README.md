@@ -2,13 +2,20 @@
 
 A compiler web service I quickly wrote to for fun in Go. It compiles core programming features such as `let`, `while loops` and `if` statements. Although this is an S-Expression mini language, its not Scheme.
 
-Run with Docker:
+![compiler](docs/compile.png)
+
+### Run App with Docker:
 
 ```
 $ docker-compose up --build
 ```
 
-#### How to call the web service 
+### How to call the web service
+
+```
+$ cd server
+$ make main
+```
 
 ```python
 >>> data = "(let ((sum 0)) (let ((i 0)) (begin (while (< i 5) (begin (set sum (+ sum 3)) (set i (+ i 1)))) sum)))"
